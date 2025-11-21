@@ -87,10 +87,14 @@ h1{
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
     line-height: 1em;
+
+
 }
 h1.right{
     --to: right;
 }
+
+
 .banner{
     position: relative;
 }
@@ -101,7 +105,6 @@ h1.right{
     top: 0;
     left: 0;
     pointer-events: none;
-    z-index: 0;
 }
     </style>
 </head>
@@ -131,127 +134,81 @@ h1.right{
                 <br>update interesting videos
             </h4>
             <button>Subscribe Now &#8599</button>
+
+
             <canvas id="dotsCanvas"></canvas>
         </div>
     </main>    
 
+
+
+
     <script>
-let banner = document.querySelector('.banner');
+        let banner = document.querySelector('.banner');
 let canvas = document.getElementById('dotsCanvas');
-function setCanvasSize() {
-    canvas.width = banner.offsetWidth;
-    canvas.height = banner.offsetHeight;
-}
-setCanvasSize();
+canvas.width = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
 const ctx = canvas.getContext('2d');
 let dots = [];
-const NUM_DOTS = 80;
-const arrayColors = ['#fff', '#89a5df', '#e46e7f', '#e8e191', '#c691e6'];
-function randomDot() {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 1.5 + Math.random() * 2; // make them fast!
-    return {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 1.5 + Math.random() * 2.5,
-        color: arrayColors[Math.floor(Math.random()*arrayColors.length)],
-        glow: Math.random() > 0.7 // some dots will strongly glow
-    };
+const arrayColors = ['#eee', '#545454', '#596d91', '#bb5a68', '#696541'];
+for (let index = 0; index < 100; index++) {
+    dots.push({
+        x:  Math.floor(Math.random() * canvas.width),
+        y:  Math.floor(Math.random() * canvas.height),
+        size: Math.random() * 3 + 5,
+        color: arrayColors[Math.floor(Math.random()* 5)]
+    });
 }
-function makeDots(num) {
-    dots = [];
-    for (let i = 0; i < num; i++) {
-        dots.push(randomDot());
-    }
-}
-makeDots(NUM_DOTS);
-
-function drawDots() {
-    for (const dot of dots) {
-        ctx.save();
-        ctx.globalAlpha = 1;
-        if(dot.glow) {
-            // draw strong outer glow
-            ctx.shadowColor = dot.color;
-            ctx.shadowBlur = 30;
-        } else {
-            ctx.shadowColor = dot.color;
-            ctx.shadowBlur = 7;
-        }
+const drawDots = () => {
+    dots.forEach(dot => {
+        ctx.fillStyle = dot.color;
         ctx.beginPath();
         ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI*2);
-        ctx.fillStyle = dot.color;
         ctx.fill();
-        ctx.restore();
-
-        // inner bright core
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, dot.size*0.38, 0, Math.PI*2);
-        ctx.fillStyle = "#fff";
-        ctx.globalAlpha = 0.7;
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    }
+    })
 }
-
-function moveDots() {
-    for (const dot of dots) {
-        dot.x += dot.vx;
-        dot.y += dot.vy;
-
-        // bounce at borders with wraparound for more fun
-        if (dot.x < -10) dot.x = canvas.width+10;
-        else if (dot.x > canvas.width+10) dot.x = -10;
-
-        if (dot.y < -10) dot.y = canvas.height+10;
-        else if (dot.y > canvas.height+10) dot.y = -10;
-    }
-}
-
-function animate() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    moveDots();
-    drawDots();
-    requestAnimationFrame(animate);
-}
-
-animate();
-
-// Responsive: on resize always redraw and regen dots for quality
-window.addEventListener('resize', () => {
-    setCanvasSize();
-    makeDots(NUM_DOTS);
-});
-
-// Draw lines on mouse move like before
+drawDots();
 banner.addEventListener('mousemove', (event) => {
-    let rect = banner.getBoundingClientRect();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawDots();
     let mouse = {
-        x:  event.clientX - rect.left,
-        y:  event.clientY - rect.top
-    };
-    ctx.save();
-    for(const dot of dots) {
-        let dx = mouse.x-dot.x, dy = mouse.y-dot.y;
-        let distance = Math.sqrt(dx*dx + dy*dy);
-        if(distance < 130) {
+        x:  event.pageX - banner.getBoundingClientRect().left,
+        y:  event.pageY - banner.getBoundingClientRect().top
+    }
+    dots.forEach(dot => {
+        let distance = Math.sqrt((mouse.x - dot.x) ** 2 + (mouse.y - dot.y) ** 2);
+        if(distance < 300){
+            ctx.strokeStyle = dot.color;
+            ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(dot.x, dot.y);
             ctx.lineTo(mouse.x, mouse.y);
-            ctx.strokeStyle = dot.color;
-            ctx.globalAlpha = 1 - distance/130;
-            ctx.lineWidth = 1 + (dot.size*0.5);
-            ctx.shadowColor = dot.color;
-            ctx.shadowBlur = 15;
             ctx.stroke();
-            ctx.globalAlpha = 1;
-            ctx.shadowBlur = 0;
-              }
+        }
+    })
+})
+banner.addEventListener('mouseout', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawDots();
+})
+window.addEventListener('resize', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = banner.offsetWidth;
+    canvas.height = banner.offsetHeight;
+
+
+    dots = [];
+    for (let index = 0; index < 50; index++) {
+        dots.push({
+            x:  Math.floor(Math.random() * canvas.width),
+            y:  Math.floor(Math.random() * canvas.height),
+            size: Math.random() * 3 + 5,
+            color: arrayColors[Math.floor(Math.random()* 5)]
+        });
     }
-    ctx.restore();
-});
+    drawDots();
+})
     </script>
 </body>
 </html>
+
